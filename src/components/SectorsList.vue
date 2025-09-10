@@ -17,9 +17,18 @@
         </div>
         
         <div class="sector-actions">
-          <button @click="editSector(index)" class="btn-edit" title="Редактировать">
+          <button
+            @click="editSector(index)"
+            class="btn-edit"
+            title="Редактировать"
+          >
           </button>
-          <button @click="removeSector(index)" class="btn-delete" title="Удалить">
+
+          <button
+            @click="removeSector(index)"
+            class="btn-delete"
+            title="Удалить"
+          >
           </button>
         </div>
       </div>
@@ -33,15 +42,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { ISector } from '@/types';
 
-interface Sector {
-  name: string;
-  value: number;
-  color: string;
-}
 
 const props = defineProps<{
-  sectors: Sector[];
+  sectors: ISector[];
 }>();
 
 const emit = defineEmits<{

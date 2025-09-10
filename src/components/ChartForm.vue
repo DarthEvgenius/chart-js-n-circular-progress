@@ -3,7 +3,7 @@
     <h3>Добвление сектора</h3>
 
     <form
-      @submit.prevent="addSector"
+      @submit.prevent="handleSubmit"
       class="form"
     >
       <div class="form-group">
@@ -30,25 +30,39 @@
       </div>
 
       <div class="form-group">
-        <label for="color">Цвет:</label>
+        <div
+          class="form-group color-group"
+          :style="{ '--color': form.color }"
+        >
+          <label for="color">Цвет:</label>
+
+          <input
+            id="value"
+            v-model="form.color"
+            type="text"
+            disabled
+          />
+        </div>
 
         <ChromePicker
           v-model="form.color"
           id="color"
           class="color-picker"
         />
-
       </div>
 
-      <button type="submit" class="btn">
+      <button
+        type="submit"
+        class="btn"
+      >
         {{ editingIndex !== null ? 'Обновить' : 'Добавить сектор' }}
       </button>
       
       <button 
         v-if="editingIndex !== null" 
         type="button" 
-        @click="cancelEdit"
-        class="btn-secondary"
+        @click="handleCancel"
+        class="btn btn-secondary"
       >
         Отмена
       </button>
@@ -57,56 +71,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { reactive, watchEffect } from 'vue';
 import { ChromePicker } from 'vue-color'
-
-interface Sector {
-  name: string;
-  value: number;
-  color: string;
-}
+import type { ISector } from '@/types';
 
 const emit = defineEmits<{
-  (e: 'add', sector: Sector): void;
-  (e: 'update', payload: { index: number; sector: Sector }): void;
+  (e: 'add', sector: ISector): void;
+  (e: 'update', payload: { index: number; sector: ISector }): void;
+  (e: 'cancel'): void;
 }>();
 
-const form = reactive({
+const { editingSector, editingIndex } = defineProps<{
+  editingSector: ISector | null;
+  editingIndex: number | null
+}>()
+
+
+
+const form = reactive<ISector>({
   name: '',
   value: 1,
   color: '#ff6384'
 });
 
-const editingIndex = ref<number | null>(null);
 
-const addSector = () => {
-  const sector: Sector = {
+const handleSubmit = () => {
+  const sector: ISector = {
     name: form.name,
     value: form.value,
     color: form.color
   };
 
-  if (editingIndex.value !== null) {
-    emit('update', { index: editingIndex.value, sector });
-    editingIndex.value = null;
+  if (editingSector !== null && editingIndex !== null) {
+    emit('update', { index: editingIndex, sector });
   } else {
     emit('add', sector);
   }
+};
 
+const handleCancel = () => {
+  emit('cancel');
   resetForm();
 };
 
-const editSector = (index: number, sector: Sector) => {
-  form.name = sector.name;
-  form.value = sector.value;
-  form.color = sector.color;
-  editingIndex.value = index;
-};
-
-const cancelEdit = () => {
-  editingIndex.value = null;
-  resetForm();
-};
 
 const resetForm = () => {
   form.name = '';
@@ -114,10 +121,15 @@ const resetForm = () => {
   form.color = '#ff6384';
 };
 
-defineExpose({
-  editSector,
-  cancelEdit
-});
+
+watchEffect(() => {
+  if (editingSector) {
+    Object.assign(form, editingSector)
+  } else {
+    resetForm()
+  }
+})
+
 </script>
 
 <style scoped lang="scss">
@@ -125,10 +137,6 @@ defineExpose({
   width: 100%;
   
   background: var(--bg-primary);
-  padding: var(--spacing-lg);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  margin-bottom: var(--spacing-xl);
 }
 
 h3 {
@@ -146,10 +154,29 @@ h3 {
   padding: 10px 20px;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
   border: 1px solid var(--bd-color);
   border-radius: var(--bd-rad);
 
+  .color-group {
+    margin-bottom: 10px;
+    position: relative;
+
+    &::after {
+      content: '';
+      display: block;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: var(--color);
+      
+      position: absolute;
+      right: 1rem;
+      bottom: 50%;
+      transform: translateY(50%);
+      z-index: 10;
+    }
+  }
+  
   .color-picker {
     width: 100%;
     box-shadow: none;
@@ -167,19 +194,6 @@ label {
   font-weight: 400;
 }
 
-input {
-  padding: var(--spacing-sm);
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-base);
-  transition: border-color var(--transition-base);
-
-  &:focus {
-    outline: none;
-    border-color: var(--accent-color);
-  }
-}
-
 .color-input {
   width: 60px;
   height: 40px;
@@ -187,39 +201,7 @@ input {
   border: none;
 }
 
-.color-value {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
-}
-
-.btn-primary, .btn-secondary {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: none;
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.btn-primary {
-  background: var(--accent-color);
-  color: white;
-
-  &:hover {
-    background: var(--primary-color);
-    transform: translateY(-1px);
-  }
-}
-
 .btn-secondary {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-
-  &:hover {
-    background: var(--border-color);
-  }
+  --bg: var(--primary-color);
 }
-
 </style>

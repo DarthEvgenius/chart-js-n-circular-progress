@@ -10,7 +10,7 @@ import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
-interface ChartData {
+interface IChartData {
   labels: string[];
   datasets: {
     data: number[];
@@ -31,7 +31,7 @@ const props = defineProps<{
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let chart: Chart<'pie'> | null = null;
 
-const chartData = ref<ChartData>({
+const chartData = ref<IChartData>({
   labels: [],
   datasets: [{
     data: [],
@@ -107,7 +107,9 @@ onBeforeUnmount(() => {
 
 <style scoped lang='scss'>
 .chart {
+  width: 100%;
   max-width: 95vw;
-  display: flex;justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 </style>

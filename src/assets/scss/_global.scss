@@ -14,14 +14,17 @@ body {
 }
 
 .btn {
+  --bg: var(--blue-color);
+  
   padding: 1.125em 2.5em;
   border-radius: var(--bd-rad);
   color: #fff;
-  background-color: var(--blue-color);
+  background-color: var(--bg);
+  cursor: pointer;
   transition: background-color var(--transition-time);
 
   &:hover {
-    background-color: hsl(from var(--blue-color) h s calc(l - 15));
+    background-color: hsl(from var(--bg) h s calc(l - 15));
   }
 
   @media (max-width: 550px) {

@@ -46,8 +46,11 @@
           <div class="dialog__content">
             <ChartForm
               ref="formRef"
+              :editingSector
+              :editingIndex
               @add="addSector"
               @update="updateSector"
+              @cancel="closeDialog"
             />
           </div>
         </div>
@@ -57,26 +60,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import PieChart from '../components/PieChart.vue';
 import ChartForm from '../components/ChartForm.vue';
 import SectorsList from '../components/SectorsList.vue';
+import type { ISector } from '@/types';
 
-interface Sector {
-  name: string;
-  value: number;
-  color: string;
-}
 
-const sectors = ref<Sector[]>([
-  { name: 'Сектор-1', value: 25, color: '#ff6384' },
-  { name: 'Сектор-2', value: 25, color: '#36a2eb' },
-  { name: 'Сектор-3', value: 25, color: '#ffcd56' }
+const sectors = ref<ISector[]>([
+  { name: 'Сектор-1', value: 25, color: '#FF6384' },
+  { name: 'Сектор-2', value: 25, color: '#FFCD56' },
+  { name: 'Сектор-3', value: 25, color: '#4BC0C0' }
 ]);
 
 const formRef = ref<InstanceType<typeof ChartForm> | null>(null);
 const isDialogOpen = ref(false);
 const editingIndex = ref<number | null>(null);
+
+const editingSector = computed(() => editingIndex.value !== null ? sectors.value[editingIndex.value] : null)
 
 const openDialog = () => {
   isDialogOpen.value = true;
@@ -86,44 +87,39 @@ const openDialog = () => {
 const closeDialog = () => {
   isDialogOpen.value = false;
   editingIndex.value = null;
-  if (formRef.value) {
-    formRef.value.cancelEdit();
-  }
 };
 
-const addSector = (sector: Sector) => {
+const addSector = (sector: ISector) => {
   sectors.value.push(sector);
+  closeDialog()
 };
 
-const updateSector = (payload: { index: number; sector: Sector }) => {
+const updateSector = (payload: { index: number; sector: ISector }) => {
   sectors.value[payload.index] = payload.sector;
+  closeDialog()
 };
+
 
 const editSector = (index: number) => {
-  if (formRef.value) {
-    formRef.value.editSector(index, sectors.value[index]);
-  }
+  editingIndex.value = index;
+  isDialogOpen.value = true;
 };
 
 const removeSector = (index: number) => {
   sectors.value.splice(index, 1);
-  
-  // Отмена редактирования если удаляем редактируемый элемент
-  if (formRef.value) {
-    formRef.value.cancelEdit();
-  }
 };
 </script>
 
 <style scoped lang="scss">
 .chart-page {
+  padding-inline: 1rem;
   display: grid;
   row-gap: 2.5rem;
 
   &__title {
     padding-bottom: 0.95em;
     text-align: left;
-    font-size: 2rem;
+    font-size: clamp(1.4rem, 0.5rem + 3vw, 2rem);
     font-weight: 600;
     border-bottom: 1px solid var(--bd-color);
   }
@@ -142,6 +138,9 @@ const removeSector = (index: number) => {
 
 .chart-side {
   width: 500px;
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
 }
 
 .controls-side {
